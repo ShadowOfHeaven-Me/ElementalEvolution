@@ -1,0 +1,25 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="wormholeGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.2" />
+      <stop offset="40%" stop-color="#9370db" stop-opacity="0.6" />
+      <stop offset="80%" stop-color="#9370db" />
+      <stop offset="100%" stop-color="#483d8b" />
+    </radialGradient>
+  </defs>
+  <ellipse cx="50" cy="50" rx="40" ry="30" fill="url(#wormholeGradient)">
+    <animate attributeName="rx" values="40;38;40" dur="3s" repeatCount="indefinite" />
+    <animate attributeName="ry" values="30;32;30" dur="3s" repeatCount="indefinite" />
+    <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="15s" repeatCount="indefinite"/>
+  </ellipse>
+  <circle cx="50" cy="50" r="15" fill="#ffffff" opacity="0.3">
+    <animate attributeName="r" values="15;12;15" dur="2s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0.3;0.1;0.3" dur="2s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="50" cy="50" r="8" fill="#ffffff" opacity="0.4">
+    <animate attributeName="r" values="8;7;8" dur="1.5s" repeatCount="indefinite" />
+  </circle>
+  <ellipse cx="50" cy="50" rx="50" ry="20" fill="none" stroke="#9370db" stroke-width="1" opacity="0.6">
+    <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="10s" repeatCount="indefinite"/>
+  </ellipse>
+</svg>
