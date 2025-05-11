@@ -414,51 +414,178 @@ export class Renderer {
     ctx.stroke();
   }
   
-  // Render a food entity with special styling
+  // Render a food entity as a rotating energy particle
   private renderFood(food: Food, screenPos: Vector, screenRadius: number): void {
     const ctx = this.ctx;
     
-    // Add a pulsing effect
+    // Create rotation animation
+    const rotationAngle = (Date.now() / 1000) % (Math.PI * 2);
     const pulseScale = 0.2 * Math.sin(Date.now() / 500) + 1;
     
-    // Draw a glowing effect
-    const gradient = ctx.createRadialGradient(
-      screenPos.x, screenPos.y, 0,
-      screenPos.x, screenPos.y, screenRadius * pulseScale
+    // Save the current context state
+    ctx.save();
+    ctx.translate(screenPos.x, screenPos.y);
+    ctx.rotate(rotationAngle);
+    
+    // Create bright color for core and glow
+    const baseColor = food.color;
+    const glowColor = this.getBrighterColor(baseColor);
+    
+    // Draw outer glow
+    const outerGlow = ctx.createRadialGradient(
+      0, 0, 0,
+      0, 0, screenRadius * 3 * pulseScale
     );
+    outerGlow.addColorStop(0, this.colorWithAlpha(glowColor, 0.7));
+    outerGlow.addColorStop(0.5, this.colorWithAlpha(baseColor, 0.3));
+    outerGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
     
-    gradient.addColorStop(0, food.color);
-    gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-    
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = outerGlow;
     ctx.beginPath();
-    ctx.arc(screenPos.x, screenPos.y, screenRadius * 1.5 * pulseScale, 0, Math.PI * 2);
+    ctx.arc(0, 0, screenRadius * 3 * pulseScale, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Draw energy particle core with a more complex shape
+    const numRays = 6;
+    const innerRadius = screenRadius * 0.5;
+    const outerRadius = screenRadius * pulseScale;
+    
+    // Draw star-like shape for energy particle
+    ctx.beginPath();
+    ctx.fillStyle = glowColor;
+    
+    for (let i = 0; i < numRays * 2; i++) {
+      const radius = i % 2 === 0 ? outerRadius : innerRadius;
+      const angle = (i * Math.PI) / numRays;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    
+    ctx.closePath();
+    ctx.fill();
+    
+    // Add inner glow
+    const innerGlow = ctx.createRadialGradient(
+      0, 0, 0,
+      0, 0, innerRadius
+    );
+    innerGlow.addColorStop(0, "rgba(255, 255, 255, 0.9)");
+    innerGlow.addColorStop(1, this.colorWithAlpha(glowColor, 0.5));
+    
+    ctx.fillStyle = innerGlow;
+    ctx.beginPath();
+    ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Optional: Add energy particles orbiting
+    const numOrbitingParticles = 3;
+    const orbitRadius = screenRadius * 1.5 * pulseScale;
+    const orbitOffset = Date.now() / 2000; // Different rotation speed
+    
+    for (let i = 0; i < numOrbitingParticles; i++) {
+      const particleAngle = (i * Math.PI * 2 / numOrbitingParticles) + orbitOffset;
+      const particleX = Math.cos(particleAngle) * orbitRadius;
+      const particleY = Math.sin(particleAngle) * orbitRadius;
+      const particleSize = screenRadius * 0.3;
+      
+      ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+      ctx.beginPath();
+      ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // Restore context
+    ctx.restore();
   }
   
   // Render an enemy with special styling
   private renderEnemy(enemy: Enemy, screenPos: Vector, screenRadius: number): void {
     const ctx = this.ctx;
     
-    // Draw a ring around the enemy based on behavior
-    let ringColor;
+    // Get colors based on enemy behavior
+    let baseColor, glowColor;
     switch (enemy.behavior) {
       case "passive":
-        ringColor = "rgba(100, 200, 100, 0.5)"; // Green for passive
+        baseColor = "rgb(40, 200, 100)"; // Green for passive
         break;
       case "neutral":
-        ringColor = "rgba(200, 200, 100, 0.5)"; // Yellow for neutral
+        baseColor = "rgb(200, 200, 40)"; // Yellow for neutral
         break;
       case "aggressive":
-        ringColor = "rgba(200, 100, 100, 0.5)"; // Red for aggressive
+        baseColor = "rgb(230, 60, 60)"; // Red for aggressive
         break;
+      default:
+        baseColor = "rgb(150, 150, 150)"; // Gray for unknown
     }
     
-    ctx.strokeStyle = ringColor;
-    ctx.lineWidth = 2;
+    // Create brighter glow color
+    glowColor = this.getBrighterColor(baseColor);
+    
+    // Pulsing effect based on aggression - faster for aggressive enemies
+    const pulseFreq = enemy.behavior === "aggressive" ? 300 : 
+                      enemy.behavior === "neutral" ? 500 : 800;
+    const pulseScale = 0.15 * Math.sin(Date.now() / pulseFreq) + 1;
+    
+    // Draw outer glow
+    const outerGlow = ctx.createRadialGradient(
+      screenPos.x, screenPos.y, 0,
+      screenPos.x, screenPos.y, screenRadius * 2.5 * pulseScale
+    );
+    outerGlow.addColorStop(0, this.colorWithAlpha(glowColor, 0.7));
+    outerGlow.addColorStop(0.5, this.colorWithAlpha(baseColor, 0.3));
+    outerGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+    
+    ctx.fillStyle = outerGlow;
     ctx.beginPath();
-    ctx.arc(screenPos.x, screenPos.y, screenRadius * 1.2, 0, Math.PI * 2);
+    ctx.arc(screenPos.x, screenPos.y, screenRadius * 2.5 * pulseScale, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw core of enemy with inner glow
+    const innerGlow = ctx.createRadialGradient(
+      screenPos.x, screenPos.y, 0,
+      screenPos.x, screenPos.y, screenRadius
+    );
+    innerGlow.addColorStop(0, "rgba(255, 255, 255, 0.8)");
+    innerGlow.addColorStop(0.5, baseColor);
+    innerGlow.addColorStop(1, this.colorWithAlpha(baseColor, 0.8));
+    
+    ctx.fillStyle = innerGlow;
+    ctx.beginPath();
+    ctx.arc(screenPos.x, screenPos.y, screenRadius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Add a bright stroke
+    ctx.strokeStyle = glowColor;
+    ctx.lineWidth = 2;
     ctx.stroke();
+    
+    // Add behavior-specific effects
+    if (enemy.behavior === "aggressive") {
+      // Add spikes for aggressive enemies
+      const numSpikes = 8;
+      const spikeLength = screenRadius * 0.5;
+      
+      ctx.fillStyle = glowColor;
+      for (let i = 0; i < numSpikes; i++) {
+        const angle = (i * Math.PI * 2 / numSpikes) + (Date.now() / 2000); // Rotate slowly
+        const x1 = screenPos.x + Math.cos(angle) * screenRadius;
+        const y1 = screenPos.y + Math.sin(angle) * screenRadius;
+        const x2 = screenPos.x + Math.cos(angle) * (screenRadius + spikeLength);
+        const y2 = screenPos.y + Math.sin(angle) * (screenRadius + spikeLength);
+        
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+    }
     
     // Draw health bar
     this.drawHealthBar(enemy, screenPos, screenRadius);

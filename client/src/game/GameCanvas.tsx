@@ -265,7 +265,7 @@ const GameCanvas = ({ gameState, onScoreUpdate, onPlayerDeath }: GameCanvasProps
       <canvas
         ref={canvasRef}
         className="absolute top-0 left-0 w-full h-full z-0"
-        style={{ backgroundColor: "#0f0f23" }}
+        style={{ backgroundColor: "#050510" }}
       />
       <div className="absolute bottom-2 left-2 text-xs text-white z-10 bg-black/50 p-1 rounded">
         WASD to move, Mouse to aim, Click to shoot
