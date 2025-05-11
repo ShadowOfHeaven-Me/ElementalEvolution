@@ -45,22 +45,25 @@ function App() {
     }
   };
 
+  // Log current game state
+  console.log("App rendering with phase:", phase, "player name:", playerName);
+  
   return (
     <div className="app-container">
-      {phase === "ready" && (
+      {phase === "ready" ? (
         <Menu 
           onStart={handleStartGame}
           isMuted={isMuted}
           onToggleMute={toggleMute}
         />
-      )}
-      
-      {phase !== "ready" && (
-        <Game 
-          playerName={playerName}
-          isMuted={isMuted}
-          onToggleMute={toggleMute}
-        />
+      ) : (
+        <div className="game-wrapper h-full w-full">
+          <Game 
+            playerName={playerName || "Player"} 
+            isMuted={isMuted}
+            onToggleMute={toggleMute}
+          />
+        </div>
       )}
     </div>
   );
