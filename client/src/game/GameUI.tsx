@@ -58,6 +58,9 @@ const GameUI = ({
     evolutionPath: "Subatomic"
   });
   
+  // Calculate top player score from leaderboard
+  const topPlayerScore = leaderboard.length > 0 ? leaderboard[0].score : 0;
+  
   // Update player stats
   useEffect(() => {
     if (player) {
@@ -113,7 +116,7 @@ const GameUI = ({
       
       {/* Bottom right - Stats and Minimap */}
       <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
-        <StatsDisplay stats={playerStats} />
+        <StatsDisplay stats={playerStats} topPlayerScore={topPlayerScore} />
         {player && <Minimap player={player} entities={entities} worldSize={worldSize} />}
       </div>
       

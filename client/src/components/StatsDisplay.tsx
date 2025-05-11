@@ -15,10 +15,24 @@ interface PlayerStats {
 
 interface StatsDisplayProps {
   stats: PlayerStats;
+  topPlayerScore?: number; // Optional top player score from leaderboard
 }
 
-const StatsDisplay = ({ stats }: StatsDisplayProps) => {
-  const xpPercentage = (stats.xp / stats.xpToNextLevel) * 100;
+const StatsDisplay = ({ stats, topPlayerScore }: StatsDisplayProps) => {
+  // Calculate XP percentage based on top player score if available
+  let xpPercentage: number;
+  let xpDisplay: string;
+  
+  if (topPlayerScore && topPlayerScore > 0) {
+    // Use the top player's score as a benchmark
+    xpPercentage = Math.min((stats.score / topPlayerScore) * 100, 100);
+    xpDisplay = `${stats.score}/${topPlayerScore}`;
+  } else {
+    // Fallback to the traditional XP to next level
+    xpPercentage = (stats.xp / stats.xpToNextLevel) * 100;
+    xpDisplay = `${stats.xp}/${stats.xpToNextLevel} XP`;
+  }
+  
   const healthPercentage = (stats.health / stats.maxHealth) * 100;
   
   return (
@@ -27,7 +41,7 @@ const StatsDisplay = ({ stats }: StatsDisplayProps) => {
         <div className="space-y-3">
           <div className="flex justify-between items-center text-xs">
             <div className="font-semibold">Level {stats.level}</div>
-            <div className="text-gray-400">{stats.xp}/{stats.xpToNextLevel} XP</div>
+            <div className="text-gray-400">{xpDisplay}</div>
           </div>
           
           <Progress value={xpPercentage} className="h-2 bg-gray-800" indicatorClassName="bg-blue-400" />
