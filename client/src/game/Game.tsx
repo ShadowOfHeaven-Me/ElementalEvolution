@@ -91,26 +91,39 @@ const Game = ({ playerName, isMuted, onToggleMute }: GameProps) => {
     const currentLevel = player.level;
     const xpRequired = player.xpToNextLevel;
     
+    // Check if player xp is sufficient and we're not already showing the upgrade menu
     if (player.xp >= xpRequired && !gameState.showUpgradeMenu) {
       console.log("Player leveled up to", currentLevel + 1);
-      // Level up and show upgrade menu
-      player.levelUp();
-      
-      // Play success sound
-      playSuccess();
       
       // Get upgrade options based on level and current path
       const upgradeOptions = getUpgradesForLevel(
         currentLevel + 1, 
         player.evolutionPath
       );
-      console.log("Upgrade options:", upgradeOptions);
       
-      setGameState(prev => ({
-        ...prev,
-        showUpgradeMenu: true,
-        upgradeOptions
-      }));
+      // Only show upgrade menu if there are options available
+      if (upgradeOptions && upgradeOptions.length > 0) {
+        console.log("Showing upgrade options:", upgradeOptions);
+        
+        // Level up and show upgrade menu
+        player.levelUp();
+        
+        // Play success sound
+        playSuccess();
+        
+        setGameState(prev => ({
+          ...prev,
+          showUpgradeMenu: true,
+          upgradeOptions
+        }));
+      } else {
+        // No more upgrades available, just level up quietly
+        console.log("No more upgrades available at level", currentLevel + 1);
+        player.levelUp();
+        
+        // Play success sound still
+        playSuccess();
+      }
       
       // Update leaderboard
       setGameState(prev => {
@@ -213,8 +226,54 @@ const Game = ({ playerName, isMuted, onToggleMute }: GameProps) => {
   // Handle game restart
   const handleRestart = useCallback(() => {
     console.log("Restarting game");
+    
+    // Reset game state with a new player
+    const worldSize = 4000;
+    const newEntities = createInitialEntities(worldSize);
+    
+    const newPlayer = new Player({
+      id: "player",
+      position: new Vector(worldSize / 2, worldSize / 2),
+      radius: 20,
+      speed: 250,
+      name: playerName || "Player",
+      color: "#8a2be2", // BlueViolet - initial electron color
+    });
+    
+    // Create a fresh leaderboard with the new player
+    const newLeaderboard = [
+      // Add some initial AI players to the leaderboard
+      ...Array.from({ length: 8 }, (_, i) => ({
+        id: `ai-${i + 1}`,
+        name: `Cosmic${i + 1}`,
+        score: Math.floor(Math.random() * 5000),
+        level: Math.floor(Math.random() * 5) + 1,
+      })),
+      // Add the player
+      {
+        id: "player",
+        name: playerName || "Player",
+        score: 0,
+        level: 1,
+        isCurrentPlayer: true
+      }
+    ];
+    
+    // Update the game state
+    setGameState({
+      player: newPlayer,
+      entities: newEntities,
+      score: 0,
+      kills: 0,
+      worldSize: worldSize,
+      showUpgradeMenu: false,
+      upgradeOptions: [],
+      leaderboard: newLeaderboard.sort((a, b) => b.score - a.score)
+    });
+    
+    // Tell the game store to restart (change the phase)
     restart();
-  }, [restart]);
+  }, [restart, playerName]);
   
   if (!gameState.player) {
     console.error("No player in game state!");
