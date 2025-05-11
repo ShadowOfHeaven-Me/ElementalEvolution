@@ -27,22 +27,36 @@ const GameCanvas = ({ gameState, onScoreUpdate, onPlayerDeath }: GameCanvasProps
   const projectilesRef = useRef<Projectile[]>([]);
 
   useEffect(() => {
+    console.log("GameCanvas useEffect - start");
+    console.log("Player:", gameState.player);
+    console.log("Entities count:", gameState.entities.length);
+    console.log("World size:", gameState.worldSize);
+
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.error("Canvas reference is null");
+      return;
+    }
 
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      console.error("Failed to get 2D context from canvas");
+      return;
+    }
 
     // Resize canvas to fill window
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      console.log("Canvas resized:", canvas.width, "x", canvas.height);
     };
 
     window.addEventListener("resize", resizeCanvas);
     resizeCanvas();
 
     // Initialize game systems
+    console.log("Initializing game systems");
+    
     const camera = new Camera(
       canvas.width,
       canvas.height,
@@ -57,10 +71,14 @@ const GameCanvas = ({ gameState, onScoreUpdate, onPlayerDeath }: GameCanvasProps
     // Set up game loop
     const gameLoop = new GameLoop();
     gameLoopRef.current = gameLoop;
+    console.log("Game loop initialized");
 
     // Update function for each frame
     const update = (deltaTime: number) => {
-      if (!gameState.player) return;
+      if (!gameState.player) {
+        console.warn("No player in update function");
+        return;
+      }
       
       const player = gameState.player;
       
@@ -213,20 +231,30 @@ const GameCanvas = ({ gameState, onScoreUpdate, onPlayerDeath }: GameCanvasProps
       // Render player
       if (gameState.player) {
         renderer.renderPlayer(gameState.player);
+      } else {
+        console.warn("No player to render");
       }
     };
 
     // Start game loop
+    console.log("Starting game loop");
     gameLoop.start(update, render);
+    console.log("Game loop started");
 
     // Clean up
     return () => {
+      console.log("GameCanvas cleanup");
       window.removeEventListener("resize", resizeCanvas);
-      gameLoop.stop();
-      inputManager.cleanup();
+      if (gameLoop) {
+        gameLoop.stop();
+      }
+      if (inputManager) {
+        inputManager.cleanup();
+      }
     };
   }, [gameState.player, gameState.entities, gameState.worldSize, onScoreUpdate, onPlayerDeath]);
 
+  console.log("GameCanvas rendering");
   return (
     <canvas
       ref={canvasRef}

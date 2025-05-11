@@ -31,19 +31,26 @@ const Game = ({ playerName, isMuted, onToggleMute }: GameProps) => {
   const { phase, end, restart } = useGame();
   const { playHit, playSuccess } = useAudio();
   
+  console.log("Game component rendering, phase:", phase);
+  console.log("Player name:", playerName);
+  
   // Initialize game state
   const [gameState, setGameState] = useState<GameState>(() => {
+    console.log("Initializing game state");
     const worldSize = 4000;
     const initialEntities = createInitialEntities(worldSize);
+    console.log("Created initial entities:", initialEntities.length);
     
     const player = new Player({
       id: "player",
       position: new Vector(worldSize / 2, worldSize / 2),
       radius: 20,
       speed: 250,
-      name: playerName,
+      name: playerName || "Player", // Ensure there's always a name
       color: "#8a2be2", // BlueViolet - initial electron color
     });
+    
+    console.log("Created player:", player);
     
     return {
       player: player,
@@ -64,7 +71,7 @@ const Game = ({ playerName, isMuted, onToggleMute }: GameProps) => {
         // Add the player
         {
           id: "player",
-          name: playerName,
+          name: playerName || "Player",
           score: 0,
           level: 1,
           isCurrentPlayer: true
@@ -75,13 +82,17 @@ const Game = ({ playerName, isMuted, onToggleMute }: GameProps) => {
   
   // Check for level up and show upgrade menu
   useEffect(() => {
-    if (!gameState.player) return;
+    if (!gameState.player) {
+      console.warn("No player found in level up effect");
+      return;
+    }
     
     const player = gameState.player;
     const currentLevel = player.level;
     const xpRequired = player.xpToNextLevel;
     
     if (player.xp >= xpRequired && !gameState.showUpgradeMenu) {
+      console.log("Player leveled up to", currentLevel + 1);
       // Level up and show upgrade menu
       player.levelUp();
       
@@ -93,6 +104,7 @@ const Game = ({ playerName, isMuted, onToggleMute }: GameProps) => {
         currentLevel + 1, 
         player.evolutionPath
       );
+      console.log("Upgrade options:", upgradeOptions);
       
       setGameState(prev => ({
         ...prev,
@@ -123,12 +135,17 @@ const Game = ({ playerName, isMuted, onToggleMute }: GameProps) => {
   
   // Handle selecting an upgrade
   const handleUpgradeSelect = useCallback((upgrade: UpgradeOption) => {
-    if (!gameState.player) return;
+    console.log("Upgrade selected:", upgrade);
+    if (!gameState.player) {
+      console.warn("No player found when selecting upgrade");
+      return;
+    }
     
     const player = gameState.player;
     
     // Apply the upgrade to the player
     player.applyUpgrade(upgrade);
+    console.log("Applied upgrade to player");
     
     // Hide the upgrade menu
     setGameState(prev => ({
@@ -139,6 +156,7 @@ const Game = ({ playerName, isMuted, onToggleMute }: GameProps) => {
   
   // Handle closing the upgrade menu without selecting
   const handleCloseUpgradeMenu = useCallback(() => {
+    console.log("Closing upgrade menu");
     setGameState(prev => ({
       ...prev,
       showUpgradeMenu: false
@@ -147,6 +165,7 @@ const Game = ({ playerName, isMuted, onToggleMute }: GameProps) => {
   
   // Handle score updates
   const handleScoreUpdate = useCallback((scoreChange: number, isKill: boolean = false) => {
+    console.log("Score update:", scoreChange, "isKill:", isKill);
     setGameState(prev => {
       const newScore = prev.score + scoreChange;
       const newKills = isKill ? prev.kills + 1 : prev.kills;
@@ -186,14 +205,21 @@ const Game = ({ playerName, isMuted, onToggleMute }: GameProps) => {
   
   // Handle player death
   const handlePlayerDeath = useCallback(() => {
+    console.log("Player died");
     // End the game
     end();
   }, [end]);
   
   // Handle game restart
   const handleRestart = useCallback(() => {
+    console.log("Restarting game");
     restart();
   }, [restart]);
+  
+  if (!gameState.player) {
+    console.error("No player in game state!");
+    return <div className="text-white">Error: Player not initialized</div>;
+  }
   
   return (
     <div className="relative w-full h-full overflow-hidden">

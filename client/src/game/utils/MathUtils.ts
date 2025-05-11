@@ -54,24 +54,44 @@ export function randomPosition(worldSize: number, margin: number = 0): Vector {
 
 // Create initial entities for the game
 export function createInitialEntities(worldSize: number): (Food | Enemy)[] {
-  const entities: (Food | Enemy)[] = [];
-  
-  // Create food particles
-  const foodCount = Math.floor(worldSize / 40); // More food for larger worlds
-  for (let i = 0; i < foodCount; i++) {
-    entities.push(Food.createRandom(worldSize));
+  try {
+    console.log("Creating initial entities for world size:", worldSize);
+    const entities: (Food | Enemy)[] = [];
+    
+    // Create food particles (reduced count for performance)
+    const foodCount = Math.floor(worldSize / 100); // Reduced from 40 to 100
+    console.log("Creating food particles:", foodCount);
+    
+    for (let i = 0; i < foodCount; i++) {
+      try {
+        const food = Food.createRandom(worldSize);
+        entities.push(food);
+      } catch (err) {
+        console.error("Error creating food:", err);
+      }
+    }
+    
+    // Create enemies of different levels (reduced count for performance)
+    const enemyCount = Math.floor(worldSize / 800); // Reduced from 400 to 800
+    console.log("Creating enemies:", enemyCount);
+    
+    for (let i = 0; i < enemyCount; i++) {
+      try {
+        // Create enemies with different levels (1-5)
+        const level = Math.floor(Math.random() * 5) + 1;
+        const enemy = Enemy.createRandom(worldSize, level);
+        entities.push(enemy);
+      } catch (err) {
+        console.error("Error creating enemy:", err);
+      }
+    }
+    
+    console.log("Created entities:", entities.length);
+    return entities;
+  } catch (err) {
+    console.error("Error in createInitialEntities:", err);
+    return []; // Return empty array to prevent crashes
   }
-  
-  // Create enemies of different levels
-  const enemyCount = Math.floor(worldSize / 400); // Fewer enemies than food
-  
-  for (let i = 0; i < enemyCount; i++) {
-    // Create enemies with different levels (1-5)
-    const level = Math.floor(Math.random() * 5) + 1;
-    entities.push(Enemy.createRandom(worldSize, level));
-  }
-  
-  return entities;
 }
 
 // Calculate distance between two entities without creating Vector objects

@@ -1,4 +1,5 @@
 import { Vector } from "../utils/Vector";
+import { Player } from "./Player";
 
 // Base class for all game entities
 export class Entity {
@@ -31,7 +32,7 @@ export class Entity {
   }
   
   // Update entity state
-  update(deltaTime: number): void {
+  update(deltaTime: number, player?: Player | null): void {
     // Move entity based on velocity
     this.position.x += this.velocity.x * deltaTime;
     this.position.y += this.velocity.y * deltaTime;
