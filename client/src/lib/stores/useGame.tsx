@@ -27,7 +27,17 @@ export const useGame = create<GameState>()(
     },
     
     restart: () => {
-      set(() => ({ phase: "ready" }));
+      // First set to ended to ensure cleanup
+      set((state) => {
+        console.log("Game restart called, current phase:", state.phase);
+        return { phase: "ended" };
+      });
+      
+      // Then set a small timeout to transition back to playing
+      setTimeout(() => {
+        console.log("Setting game phase to playing after restart");
+        set(() => ({ phase: "playing" }));
+      }, 50); 
     },
     
     end: () => {

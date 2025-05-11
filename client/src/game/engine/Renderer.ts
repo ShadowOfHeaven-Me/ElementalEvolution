@@ -21,34 +21,67 @@ export class Renderer {
   
   // Render the background grid
   renderGrid(): void {
+    console.log("Rendering grid");
     const ctx = this.ctx;
     const camera = this.camera;
     
-    // Calculate visible grid bounds
-    const startX = Math.floor((camera.position.x - (camera.viewWidth / 2) / camera.zoom) / this.gridSize) * this.gridSize;
-    const startY = Math.floor((camera.position.y - (camera.viewHeight / 2) / camera.zoom) / this.gridSize) * this.gridSize;
-    const endX = Math.ceil((camera.position.x + (camera.viewWidth / 2) / camera.zoom) / this.gridSize) * this.gridSize;
-    const endY = Math.ceil((camera.position.y + (camera.viewHeight / 2) / camera.zoom) / this.gridSize) * this.gridSize;
-    
-    // Draw vertical grid lines
-    ctx.beginPath();
-    ctx.strokeStyle = this.gridColor;
-    ctx.lineWidth = 1;
-    
-    for (let x = startX; x <= endX; x += this.gridSize) {
-      const screenPos = camera.worldToScreenPosition(x, startY);
-      ctx.moveTo(screenPos.x, 0);
-      ctx.lineTo(screenPos.x, camera.viewHeight);
+    try {
+      // Calculate visible grid bounds
+      const startX = Math.floor((camera.position.x - (camera.viewWidth / 2) / camera.zoom) / this.gridSize) * this.gridSize;
+      const startY = Math.floor((camera.position.y - (camera.viewHeight / 2) / camera.zoom) / this.gridSize) * this.gridSize;
+      const endX = Math.ceil((camera.position.x + (camera.viewWidth / 2) / camera.zoom) / this.gridSize) * this.gridSize;
+      const endY = Math.ceil((camera.position.y + (camera.viewHeight / 2) / camera.zoom) / this.gridSize) * this.gridSize;
+      
+      // Draw a background for better visibility
+      ctx.fillStyle = "#0f0f23"; // Dark blue background
+      ctx.fillRect(0, 0, camera.viewWidth, camera.viewHeight);
+      
+      // Draw vertical grid lines
+      ctx.beginPath();
+      ctx.strokeStyle = this.gridColor;
+      ctx.lineWidth = 1;
+      
+      for (let x = startX; x <= endX; x += this.gridSize) {
+        const screenPos = camera.worldToScreenPosition(x, startY);
+        ctx.moveTo(screenPos.x, 0);
+        ctx.lineTo(screenPos.x, camera.viewHeight);
+      }
+      
+      // Draw horizontal grid lines
+      for (let y = startY; y <= endY; y += this.gridSize) {
+        const screenPos = camera.worldToScreenPosition(startX, y);
+        ctx.moveTo(0, screenPos.y);
+        ctx.lineTo(camera.viewWidth, screenPos.y);
+      }
+      
+      ctx.stroke();
+    } catch (err) {
+      console.error("Error rendering grid:", err);
+      
+      // Fallback rendering if the calculation fails
+      ctx.fillStyle = "#0f0f23"; // Dark blue background
+      ctx.fillRect(0, 0, camera.viewWidth, camera.viewHeight);
+      
+      // Simple grid pattern
+      const gridSize = 50;
+      ctx.beginPath();
+      ctx.strokeStyle = "rgba(50, 50, 70, 0.3)";
+      ctx.lineWidth = 1;
+      
+      // Vertical lines
+      for (let x = 0; x <= camera.viewWidth; x += gridSize) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, camera.viewHeight);
+      }
+      
+      // Horizontal lines
+      for (let y = 0; y <= camera.viewHeight; y += gridSize) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(camera.viewWidth, y);
+      }
+      
+      ctx.stroke();
     }
-    
-    // Draw horizontal grid lines
-    for (let y = startY; y <= endY; y += this.gridSize) {
-      const screenPos = camera.worldToScreenPosition(startX, y);
-      ctx.moveTo(0, screenPos.y);
-      ctx.lineTo(camera.viewWidth, screenPos.y);
-    }
-    
-    ctx.stroke();
   }
   
   // Render world boundaries
@@ -71,66 +104,109 @@ export class Renderer {
   
   // Render a general entity
   renderEntity(entity: Entity): void {
-    if (!this.camera.isVisible(entity.position, entity.radius)) return;
-    
-    const ctx = this.ctx;
-    const screenPos = this.camera.worldToScreenPosition(entity.position.x, entity.position.y);
-    const screenRadius = entity.radius * this.camera.zoom;
-    
-    ctx.fillStyle = entity.color;
-    ctx.beginPath();
-    ctx.arc(screenPos.x, screenPos.y, screenRadius, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // If the entity is food, draw a specific style
-    if (entity instanceof Food) {
-      this.renderFood(entity, screenPos, screenRadius);
-    }
-    
-    // If the entity is an enemy, draw additional details
-    if (entity instanceof Enemy) {
-      this.renderEnemy(entity, screenPos, screenRadius);
-    }
-    
-    // Draw name if available and entity is large enough
-    if (entity.name && screenRadius > 15) {
-      this.drawEntityName(entity.name, screenPos, screenRadius);
+    try {
+      if (!this.camera.isVisible(entity.position, entity.radius)) return;
+      
+      console.log(`Rendering entity at ${entity.position.x}, ${entity.position.y}`);
+      
+      const ctx = this.ctx;
+      const screenPos = this.camera.worldToScreenPosition(entity.position.x, entity.position.y);
+      const screenRadius = entity.radius * this.camera.zoom;
+      
+      // Draw entity base shape
+      ctx.fillStyle = entity.color;
+      ctx.beginPath();
+      ctx.arc(screenPos.x, screenPos.y, screenRadius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw a stroke around the entity for better visibility
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // If the entity is food, draw a specific style
+      if (entity instanceof Food) {
+        this.renderFood(entity, screenPos, screenRadius);
+      }
+      
+      // If the entity is an enemy, draw additional details
+      if (entity instanceof Enemy) {
+        this.renderEnemy(entity, screenPos, screenRadius);
+      }
+      
+      // Draw name if available and entity is large enough
+      if (entity.name && screenRadius > 10) {
+        this.drawEntityName(entity.name, screenPos, screenRadius);
+      }
+    } catch (err) {
+      console.error("Error rendering entity:", err);
     }
   }
   
   // Render a player with special styling
   renderPlayer(player: Player): void {
-    if (!this.camera.isVisible(player.position, player.radius)) return;
-    
-    const ctx = this.ctx;
-    const screenPos = this.camera.worldToScreenPosition(player.position.x, player.position.y);
-    const screenRadius = player.radius * this.camera.zoom;
-    
-    // Draw player body
-    ctx.fillStyle = player.color;
-    ctx.beginPath();
-    ctx.arc(screenPos.x, screenPos.y, screenRadius, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Draw aiming line
-    const lineEndX = screenPos.x + player.facing.x * screenRadius * 1.2;
-    const lineEndY = screenPos.y + player.facing.y * screenRadius * 1.2;
-    
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(screenPos.x, screenPos.y);
-    ctx.lineTo(lineEndX, lineEndY);
-    ctx.stroke();
-    
-    // Draw health bar
-    this.drawHealthBar(player, screenPos, screenRadius);
-    
-    // Draw player name
-    this.drawEntityName(player.name || "Player", screenPos, screenRadius);
-    
-    // Draw level indicator
-    this.drawLevelIndicator(player.level, screenPos, screenRadius);
+    try {
+      if (!this.camera.isVisible(player.position, player.radius)) return;
+      
+      console.log(`Rendering player at ${player.position.x}, ${player.position.y}`);
+      
+      const ctx = this.ctx;
+      const screenPos = this.camera.worldToScreenPosition(player.position.x, player.position.y);
+      const screenRadius = player.radius * this.camera.zoom;
+      
+      // Draw player glow effect
+      const gradient = ctx.createRadialGradient(
+        screenPos.x, screenPos.y, 0,
+        screenPos.x, screenPos.y, screenRadius * 1.5
+      );
+      gradient.addColorStop(0, player.color);
+      gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(screenPos.x, screenPos.y, screenRadius * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw player body
+      ctx.fillStyle = player.color;
+      ctx.beginPath();
+      ctx.arc(screenPos.x, screenPos.y, screenRadius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Add stroke for better visibility
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Draw inner highlight
+      ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.beginPath();
+      ctx.arc(screenPos.x - screenRadius * 0.3, screenPos.y - screenRadius * 0.3, screenRadius * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw aiming line
+      const lineLength = screenRadius * 1.5;
+      const lineEndX = screenPos.x + player.facing.x * lineLength;
+      const lineEndY = screenPos.y + player.facing.y * lineLength;
+      
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(screenPos.x, screenPos.y);
+      ctx.lineTo(lineEndX, lineEndY);
+      ctx.stroke();
+      
+      // Draw health bar
+      this.drawHealthBar(player, screenPos, screenRadius);
+      
+      // Draw player name
+      this.drawEntityName(player.name || "Player", screenPos, screenRadius);
+      
+      // Draw level indicator
+      this.drawLevelIndicator(player.level, screenPos, screenRadius);
+    } catch (err) {
+      console.error("Error rendering player:", err);
+    }
   }
   
   // Render a projectile
