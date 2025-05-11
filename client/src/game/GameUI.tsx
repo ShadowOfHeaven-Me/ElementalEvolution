@@ -25,7 +25,7 @@ interface GameUIProps {
   isGameOver: boolean;
   onRestart: () => void;
   worldSize: number;
-  entities: Entity[];
+  entities: (Enemy | Food)[];
 }
 
 const GameUI = ({

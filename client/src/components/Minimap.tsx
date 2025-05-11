@@ -7,7 +7,7 @@ import { Food } from "../game/entities/Food";
 
 interface MinimapProps {
   player: Player;
-  entities: Entity[];
+  entities: (Enemy | Food)[];
   worldSize: number;
   scale?: number;
 }

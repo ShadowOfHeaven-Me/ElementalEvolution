@@ -57,7 +57,7 @@ export class Enemy extends Entity {
   
   // Update enemy behavior
   update(deltaTime: number, player: Player | null): void {
-    super.update(deltaTime);
+    super.update(deltaTime, player);
     
     // Update direction change timer
     this.lastDirectionChange += deltaTime;

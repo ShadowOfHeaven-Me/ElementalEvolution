@@ -168,7 +168,7 @@ export class Player extends Entity {
   }
   
   // Update method (called each frame)
-  update(deltaTime: number): void {
+  update(deltaTime: number, player?: Player | null): void {
     super.update(deltaTime);
     
     // Update shoot timer
