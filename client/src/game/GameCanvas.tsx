@@ -108,11 +108,16 @@ const GameCanvas = ({ gameState, onScoreUpdate, onPlayerDeath }: GameCanvasProps
         player.aim(worldMousePos);
       }
       
+      // Update player (this will update the shoot timer)
+      player.update(deltaTime);
+      
       // Handle shooting
       if (input.shooting && player.canShoot()) {
+        console.log("Player shooting, cooldown:", player.shootTimer);
         const direction = player.facing.clone();
         const projectile = player.shoot(direction);
         if (projectile) {
+          console.log("Created projectile:", projectile);
           projectilesRef.current.push(projectile);
         }
       }
