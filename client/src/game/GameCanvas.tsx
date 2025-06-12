@@ -44,22 +44,12 @@ const GameCanvas = ({ gameState, onScoreUpdate, onPlayerDeath }: GameCanvasProps
       return;
     }
 
-    // Resize canvas to fill window
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      console.log("Canvas resized:", canvas.width, "x", canvas.height);
-    };
-
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
-
     // Initialize game systems
     console.log("Initializing game systems");
     
     const camera = new Camera(
-      canvas.width,
-      canvas.height,
+      window.innerWidth,
+      window.innerHeight,
       gameState.worldSize
     );
     
@@ -67,6 +57,28 @@ const GameCanvas = ({ gameState, onScoreUpdate, onPlayerDeath }: GameCanvasProps
     const collisionManager = new CollisionManager();
     const inputManager = new InputManager(canvas);
     inputManagerRef.current = inputManager;
+
+    // Resize canvas to fill window
+    const resizeCanvas = () => {
+      // Get the actual device pixel ratio
+      const dpr = window.devicePixelRatio || 1;
+      
+      // Set the canvas size to match the window size
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      
+      // Scale the canvas context to match the device pixel ratio
+      ctx.scale(dpr, dpr);
+      
+      // Update camera viewport dimensions
+      camera.viewWidth = window.innerWidth;
+      camera.viewHeight = window.innerHeight;
+      
+      console.log("Canvas resized:", canvas.width, "x", canvas.height, "dpr:", dpr);
+    };
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
 
     // Set up game loop
     const gameLoop = new GameLoop();
@@ -85,46 +97,48 @@ const GameCanvas = ({ gameState, onScoreUpdate, onPlayerDeath }: GameCanvasProps
       // Process player input
       const input = inputManager.getInput();
       
-      // Handle player movement
-      const movementDirection = new Vector(0, 0);
-      
-      if (input.up) movementDirection.y -= 1;
-      if (input.down) movementDirection.y += 1;
-      if (input.left) movementDirection.x -= 1;
-      if (input.right) movementDirection.x += 1;
-      
-      if (movementDirection.lengthSquared() > 0) {
-        movementDirection.normalize();
-        player.move(movementDirection, deltaTime);
-      }
-      
-      // Aim toward mouse position
-      if (input.mousePosition) {
-        const worldMousePos = camera.screenToWorldPosition(
-          input.mousePosition.x,
-          input.mousePosition.y
-        );
+      // Handle player movement only if player is alive
+      if (player.health > 0) {
+        const movementDirection = new Vector(0, 0);
         
-        player.aim(worldMousePos);
-      }
-      
-      // Update player (this will update the shoot timer)
-      player.update(deltaTime);
-      
-      // Handle shooting
-      if (input.shooting && player.canShoot()) {
-        console.log("Player shooting, cooldown:", player.shootTimer);
-        const direction = player.facing.clone();
-        const projectile = player.shoot(direction);
-        if (projectile) {
-          console.log("Created projectile:", projectile);
-          projectilesRef.current.push(projectile);
+        if (input.up) movementDirection.y -= 1;
+        if (input.down) movementDirection.y += 1;
+        if (input.left) movementDirection.x -= 1;
+        if (input.right) movementDirection.x += 1;
+        
+        if (movementDirection.lengthSquared() > 0) {
+          movementDirection.normalize();
+          player.move(movementDirection, deltaTime);
         }
+        
+        // Aim toward mouse position
+        if (input.mousePosition) {
+          const worldMousePos = camera.screenToWorldPosition(
+            input.mousePosition.x,
+            input.mousePosition.y
+          );
+          
+          player.aim(worldMousePos);
+        }
+        
+        // Update player (this will update the shoot timer)
+        player.update(deltaTime);
+        
+        // Handle shooting
+        if (input.shooting && player.canShoot()) {
+          console.log("Player shooting, cooldown:", player.shootTimer);
+          const direction = player.facing.clone();
+          const projectile = player.shoot(direction);
+          if (projectile) {
+            console.log("Created projectile:", projectile);
+            projectilesRef.current.push(projectile);
+          }
+        }
+        
+        // Keep player within world bounds
+        player.position.x = Math.max(player.radius, Math.min(gameState.worldSize - player.radius, player.position.x));
+        player.position.y = Math.max(player.radius, Math.min(gameState.worldSize - player.radius, player.position.y));
       }
-      
-      // Keep player within world bounds
-      player.position.x = Math.max(player.radius, Math.min(gameState.worldSize - player.radius, player.position.x));
-      player.position.y = Math.max(player.radius, Math.min(gameState.worldSize - player.radius, player.position.y));
       
       // Update camera position to follow player
       camera.centerOn(player.position);

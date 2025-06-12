@@ -62,10 +62,11 @@ export class Enemy extends Entity {
     // Update direction change timer
     this.lastDirectionChange += deltaTime;
     
-    if (this.behavior === "aggressive" && player) {
+    // Only target player if they exist and are alive
+    if (this.behavior === "aggressive" && player && player.health > 0) {
       // Aggressive enemies always chase the player
       this.chasePlayer(player, deltaTime);
-    } else if (this.behavior === "neutral" && player) {
+    } else if (this.behavior === "neutral" && player && player.health > 0) {
       // Neutral enemies chase the player if within aggro range, otherwise wander
       const distanceToPlayer = this.position.distanceTo(player.position);
       
@@ -75,7 +76,7 @@ export class Enemy extends Entity {
         this.wander(deltaTime);
       }
     } else {
-      // Passive enemies just wander around
+      // Passive enemies or if player is dead/null, just wander around
       this.wander(deltaTime);
     }
   }
